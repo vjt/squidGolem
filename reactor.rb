@@ -1,16 +1,13 @@
 require 'eventmachine'
-require 'uri'
-require 'ipaddr'
+
+require 'database'
 
 module SquidGolem
   module Reactor
     def receive_data(data)
-      domain, user, address = parse(data)
-      if allowed?(domain, user, address)
-        send_data "\n"
-      else
-        send_data blocked_url(domain, user)
-      end
+      url, user, host = parse(data)
+      acl = acl_for(url, user, host)
+      send_data "#{acl.url}\n"
     end
 
     private
@@ -18,29 +15,20 @@ module SquidGolem
       # Format:
       # http://example.com/somepath?foo=bar&baz=true 192.168.1.1/USER - GET
       # 
+      # Returns [url, user, host]
       def parse(data)
-        url, user_host, _, method = data.split(/\s+/)
+        url, user_host, *rest = data.split(/\s+/)
         user, host = user_host.split('/')
 
-        url  = URI.parse(url)
-        addr = IPAddr.new(host)
-
-        return url, user, addr
+        return url, user, host
       end
 
-      def allowed?
+      # Check against the database
+      #
+      # Returns the ACL that matched
+      def acl_for(url, user, host)
+        Database.acl_for(url, user, host)
       end
 
-      def blocked_url(domain, user)
-      end
-  end
-
-  module Source
-  end
-
-  module Destination
-  end
-
-  module ACL
   end
 end
