@@ -1,3 +1,33 @@
+delimiter ;
+
+CREATE TABLE sources (
+  id   INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  type VARCHAR(255),
+  data VARCHAR(255)
+);
+
+ALTER TABLE sources ADD KEY(type);
+
+CREATE TABLE destinations (
+  id   INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  type VARCHAR(255) NOT NULL,
+  data VARCHAR(255) NOT NULL
+);
+
+ALTER TABLE destinations ADD KEY(type);
+
+CREATE TABLE acls (
+  id             INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  description    VARCHAR(255) NULL,
+  source_id      INT(8) NOT NULL,
+  destination_id INT(8) NOT NULL,
+  weekday        INT(8) NULL,
+  start_at       TIME   NULL,
+  end_at         TIME   NULL,
+  rewrite_url    VARCHAR(255) NULL
+);
+
+delimiter GO
 
   -- Yields a recordset containing the current valid ACLs,
   -- that is, the ones that have no date/time constraints
