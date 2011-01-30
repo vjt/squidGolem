@@ -16,4 +16,5 @@ It will implement:
 
   * A nifty web interface to manage its settings.
 
-SquidGuard is written in Ruby by <vjt@openssl.it>
+SquidGuard is written in Ruby by <vjt@openssl.it>, and
+uses EventMachine for its event-based IO Loop.
