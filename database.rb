@@ -14,11 +14,8 @@ module SquidGolem
     def initialize
     end
 
-    class ORM
-    end
-
     module Source
-      class Base < ORM
+      class Base
       end
 
       class Address < Base
@@ -29,7 +26,7 @@ module SquidGolem
     end
 
     module Destination
-      class Base < ORM
+      class Base
       end
 
       class Domain < Base
@@ -45,7 +42,8 @@ module SquidGolem
     end
 
     class ACL
-      def self.fetch(url, user, host)
+      def self.fetch(domain, user, host)
+        %[sp_check_domain #{domain}, #{user}, #{host}]
       end
 
       def url
