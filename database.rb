@@ -23,6 +23,10 @@ module SquidGolem
 
       class User < Base
       end
+
+      class LdapGroup < Base
+        # -ENOSYS, for now :-)
+      end
     end
 
     module Destination
