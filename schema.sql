@@ -24,11 +24,13 @@ CREATE TABLE acls (
   weekday        INT(8) NULL,
   start_at       TIME   NULL,
   end_at         TIME   NULL,
-  rewrite_url    VARCHAR(255) NULL
+  rewrite_url    VARCHAR(255) NULL,
+  position       INT(4) NOT NULL
 );
 
 ALTER TABLE acls ADD UNIQUE KEY acls_source_destination (source_id, destination_id);
 ALTER TABLE acls ADD KEY        acls_weekday_and_dates  (weekday, start_at, end_at);
+ALTER TABLE acls ADD UNIQUE KEY acls_position           (position);
 
 delimiter GO
 
@@ -42,7 +44,8 @@ delimiter GO
          sources.data      AS source,
          destinations.type AS destination_type,
          destinations.data AS destination,
-         acls.rewrite_url  AS rewrite_url
+         acls.rewrite_url  AS rewrite_url,
+         acls.position     AS position
   FROM acls
   INNER JOIN      sources      ON sources.id      = acls.source_id
   LEFT OUTER JOIN destinations ON destinations.id = acls.destination_id
@@ -72,6 +75,7 @@ delimiter GO
           AND
           ((source_type = 'user' AND source = _user) OR
            (source_type = 'host' AND source = _host))
+    ORDER BY position LIMIT 1
     INTO @rewrite_url;
 
     RETURN @rewrite_url;
