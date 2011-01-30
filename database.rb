@@ -6,39 +6,49 @@ module SquidGolem
 
     def self.acl_for(url, user, host)
       url  = URI.parse(url)
-      addr = IPAddr.new(host)
+      host = IPAddr.new(host)
+
+      ACL.fetch(url, user, host)
     end
 
     def initialize
     end
 
+    class ORM
+    end
 
     module Source
-      class Address
+      class Base < ORM
       end
 
-      class User
+      class Address < Base
+      end
+
+      class User < Base
       end
     end
 
     module Destination
-      class Domain
+      class Base < ORM
       end
 
-      class URL
+      class Domain < Base
+      end
+
+      class URL < Base
         # -ENOSYS
       end
 
-      class Expression
+      class Expression < Base
         # -ENOSYS
       end
     end
 
     class ACL
-      def self.fetch(source, destination)
+      def self.fetch(url, user, host)
       end
 
-      def blocked_url
+      def url
       end
     end
   end
