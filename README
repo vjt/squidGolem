@@ -1,0 +1,19 @@
+SquidGolem - A SquidGuard replacement
+
+SquidGolem is a drop-in replacement for squidGuard,
+as long as you're inclined in rewriting its configuration
+into a more modern way: using a SQL backend.
+
+It implements:
+
+  * The squid redirector interface
+  * Sources definition, basing on IP addresses and/or User
+  * Destination definition, currently only domain-based
+  * ACLs, that link together Sources, Destinations and
+    the current time.
+
+It will implement:
+
+  * A nifty web interface to manage its settings.
+
+SquidGuard is written in Ruby by <vjt@openssl.it>
