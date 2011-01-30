@@ -4,6 +4,12 @@ SquidGolem is a drop-in replacement for squidGuard,
 as long as you're inclined in rewriting its configuration
 into a more modern way: using a SQL backend.
 
+The core of ACL processing and checking is lent to the
+RDBMS, with the usage of Views and Stored Procedures.
+
+Benchmarks will tell whether caching is necessary inside
+squidGolem itself.
+
 It implements:
 
   * The squid redirector interface
