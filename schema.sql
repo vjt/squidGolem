@@ -64,6 +64,8 @@ delimiter GO
     _host      varchar(15)
   ) RETURNS varchar(255)
   BEGIN
+    SET @rewrite_url = NULL;
+
     SELECT rewrite_url FROM current_acls
     WHERE ((destination_type = _dest_type AND destination = _dest_data) OR
            destination_type IS NULL)
