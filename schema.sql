@@ -19,8 +19,8 @@ ALTER TABLE destinations ADD KEY(type);
 CREATE TABLE acls (
   id             INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   description    VARCHAR(255) NULL,
-  source_id      INT(8) NOT NULL,
-  destination_id INT(8) NOT NULL,
+  source_id      INT(8) NOT NULL, -- TODO Add Foreign Keys
+  destination_id INT(8) NULL,
   weekday        INT(8) NULL,
   start_at       TIME   NULL,
   end_at         TIME   NULL,
@@ -41,8 +41,8 @@ delimiter GO
          destinations.data AS destination,
          acls.rewrite_url  AS rewrite_url
   FROM acls
-  INNER JOIN sources      ON sources.id      = acls.source_id
-  INNER JOIN destinations ON destinations.id = acls.destination_id
+  INNER JOIN      sources      ON sources.id      = acls.source_id
+  LEFT OUTER JOIN destinations ON destinations.id = acls.destination_id
   WHERE (weekday IS NULL OR weekday = WEEKDAY(NOW())) AND
         (start_at IS NULL AND end_at IS NULL OR (
           TIME(NOW()) BETWEEN start_at AND end_at
@@ -62,7 +62,9 @@ delimiter GO
   ) RETURNS varchar(255)
   BEGIN
     SELECT rewrite_url FROM current_acls
-    WHERE (destination_type = _dest_type AND destination = _dest_data) AND
+    WHERE ((destination_type = _dest_type AND destination = _dest_data) OR
+           destination_type IS NULL)
+          AND
           ((source_type = 'user' AND source = _user) OR
            (source_type = 'host' AND source = _host))
     INTO @rewrite_url;
