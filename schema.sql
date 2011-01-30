@@ -6,7 +6,7 @@ CREATE TABLE sources (
   data VARCHAR(255)
 );
 
-ALTER TABLE sources ADD KEY(type);
+ALTER TABLE sources ADD KEY (type);
 
 CREATE TABLE destinations (
   id   INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -14,7 +14,7 @@ CREATE TABLE destinations (
   data VARCHAR(255) NOT NULL
 );
 
-ALTER TABLE destinations ADD KEY(type);
+ALTER TABLE destinations ADD KEY (type);
 
 CREATE TABLE acls (
   id             INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -26,6 +26,9 @@ CREATE TABLE acls (
   end_at         TIME   NULL,
   rewrite_url    VARCHAR(255) NULL
 );
+
+ALTER TABLE acls ADD UNIQUE KEY acls_source_destination (source_id, destination_id);
+ALTER TABLE acls ADD KEY        acls_weekday_and_dates  (weekday, start_at, end_at);
 
 delimiter GO
 
