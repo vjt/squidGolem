@@ -1,12 +1,15 @@
 delimiter ;
 
-CREATE TABLE sources (
+CREATE TABLE users (
   id   INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  type VARCHAR(255),
-  data VARCHAR(255)
+  name VARCHAR(255)
 );
 
-ALTER TABLE sources ADD KEY (type);
+CREATE TABLE hosts (
+  id   INT(8)  UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  host BIT(32), -- Yes, IPv4-only for now, won't be an headache to add IPv6 suport
+  mask TINYINT UNSIGNED
+);
 
 CREATE TABLE destinations (
   id   INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -19,7 +22,8 @@ ALTER TABLE destinations ADD KEY (type);
 CREATE TABLE acls (
   id             INT(8) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   description    VARCHAR(255) NULL,
-  source_id      INT(8) NOT NULL, -- TODO Add Foreign Keys
+  host_id        INT(8) NOT NULL, -- TODO Add Foreign Keys
+  user_id        INT(8) NULL,
   destination_id INT(8) NULL,
   weekday        INT(8) NULL,
   start_at       TIME   NULL,
@@ -28,7 +32,7 @@ CREATE TABLE acls (
   position       INT(4) NOT NULL
 );
 
-ALTER TABLE acls ADD UNIQUE KEY acls_source_destination (source_id, destination_id);
+ALTER TABLE acls ADD UNIQUE KEY acls_source_destination (host_id, user_id, destination_id);
 ALTER TABLE acls ADD KEY        acls_weekday_and_dates  (weekday, start_at, end_at);
 ALTER TABLE acls ADD UNIQUE KEY acls_position           (position);
 
@@ -40,14 +44,18 @@ delimiter GO
   DROP VIEW IF EXISTS current_acls
   GO
   CREATE VIEW current_acls AS
-  SELECT sources.type      AS source_type,
-         sources.data      AS source,
+  SELECT users.name        AS user,
+         hosts.host & ~((1<<32-hosts.mask)-1) AS host,
+         hosts.mask        AS mask,
+
          destinations.type AS destination_type,
          destinations.data AS destination,
+
          acls.rewrite_url  AS rewrite_url,
          acls.position     AS position
   FROM acls
-  INNER JOIN      sources      ON sources.id      = acls.source_id
+  INNER JOIN      hosts        ON hosts.id        = acls.host_id
+  LEFT OUTER JOIN users        ON users.id        = acls.user_id
   LEFT OUTER JOIN destinations ON destinations.id = acls.destination_id
   WHERE (weekday IS NULL OR weekday = WEEKDAY(NOW())) AND
         (start_at IS NULL AND end_at IS NULL OR (
@@ -64,18 +72,19 @@ delimiter GO
     _dest_type varchar(8),
     _dest_data varchar(255),
     _user      varchar(255),
-    _host      varchar(15)
+    _host      bit(32)
   ) RETURNS varchar(255)
   BEGIN
     SET @rewrite_url = NULL;
 
     SELECT rewrite_url FROM current_acls
-    WHERE ((destination_type = _dest_type AND destination = _dest_data) OR
-           destination_type IS NULL)
-          AND
-          ((source_type = 'user' AND source = _user) OR
-           (source_type = 'host' AND source = _host))
-    ORDER BY position LIMIT 1
+    WHERE host & ~((1<<32-mask)-1) = _host AND
+          (user IS NULL OR user = _user)   AND
+          (destination_type IS NULL OR
+           destination_type = _dest_type AND
+           destination      = _dest_data)
+    ORDER BY position
+    LIMIT 1
     INTO @rewrite_url;
 
     RETURN @rewrite_url;
@@ -89,7 +98,7 @@ delimiter GO
   CREATE FUNCTION sp_check_domain(
     _domain varchar(255),
     _user   varchar(255),
-    _host   varchar(15)
+    _host   bit(32)
   ) RETURNS varchar(255)
   BEGIN
     SELECT sp_check('domain', _domain, _user, _host) INTO @rewrite_url;
@@ -104,7 +113,7 @@ delimiter GO
   CREATE FUNCTION sp_check_url(
     _url    varchar(255),
     _user   varchar(255),
-    _host   varchar(15)
+    _host   bit(32)
   ) RETURNS varchar(255)
   BEGIN
     SELECT sp_check('url', _url, _user, _host) INTO @rewrite_url;
